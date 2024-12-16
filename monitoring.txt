@@ -1,0 +1,46 @@
+
+##----------Jump Sever------------##
+
+Install prometheus  through helm
+helm repo add stable https://charts.helm.sh/stable
+
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm install prometheus prometheus-community/prometheus
+
+
+helm repo list
+kubectl get all
+kubectl get deploy
+TO expose our prometheus sever 
+kubectl edit svc prometheus-sever 
+ --type: LoadBalancer
+
+kubectl get svc prometheus-sever --> get dns
+
+prometheus 
+
+
+
+
+Install Grafana:
+
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+helm install grafana grafana/grafana
+
+kubectl edit svc grafana 
+ --type : LoadBalancer
+
+kubectl get svc grafana
+
+kubectl edit secrets grafana
+copy admin password
+echo admin password | base64 --decode
+
+login to Grafana
+
+Datasource > Name: prometheus ,Connection: prometheus DNS > save & test
+
+Dashboard > New > import Dashboard > id:6417 or 17375 >load >Datasource : prometheus > import
+
+we can check based on namespace and nodes

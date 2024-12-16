@@ -1,0 +1,104 @@
+##------Jenkins-Server---------------##
+docker ps -a
+sonarqube installed : port 9000
+curl ifconfig.me(publicip)
+publicip:9000
+username:admin 
+password:admin
+create new password
+login to sonarqube
+SonarQube:
+
+GenerateToken:
+Administration > Security > Users >Update Tokens > name,exipry and Generate the token save it somewhere
+
+Webhooks:
+Administration > configuration > Webhooks > create > Name,Url(publicip:8080/sonarqube-webhook/) > create
+
+Create a project:
+
+Front-end:
+Projects > displayname: frontend ,branch: main > setup
+
+Go to Locally Dashboard:
+1. Provide a token > User existing token(paste Generated token) > continue
+2. Run Analysis on Your Project > Build : Other ,OS:Linux,Execute the scanner :copythat code
+
+
+Back-end:
+Projects > displayname: backend ,branch: main > setup
+
+Go to Locally Dashboard:
+1. Provide a token > User existing token(paste Generated token) > continue
+2. Run Analysis on Your Project > Build : Other ,OS:Linux,Execute the scanner :copythat code
+
+Goto AWS:(AMAZON ECR)
+Create ECR-private-repo for frontend as well as backend
+
+
+Goto Jenkins:
+
+credentials > Create  a credentials > secret text > secret:paste the sonarqube secret code,id:sonar-token
+credentials > Create  a credentials > secret text > secret:paste the AWS Account id, id:AWS_ID
+credentials > Create  a credentials > secret text > secret:fornt-end,id:ECR_REPO1
+credentials > Create  a credentials > secret text > secret:back-end,id:ECR_REPO2
+credentials > Create  a credentials > username and password > username:githubusername,paswword:personal-token,id:GITHUB-APP
+
+
+
+Plugins:
+- Docker
+- Docker pipeline
+- Docker commons
+- Docker API
+- nodejs
+- owasp-dependency-check
+- sonarqube scanner
+
+Tools:
+- nodejs > name: nodejs > install from nodejs.org
+- SonarQubescanner> sonar-scanner > install from maven central
+- dependencycheck > name:DP-Check > install automatically from github
+- Docker >Name: Docker > install from docker.com
+Apply and save
+
+system:
+- SonarQube installations > name:Sonar-server ,serverUrl:publicip:9000
+
+
+
+
+Jenkins -pipeline : frontend
+
+check the tools name and directory name  in pasted jenkins file
+we have to write Docker file for image
+
+Build the forntend jenkins
+
+Bulid the backend pipeline
+
+ArgoCD:
+
+settings > Repositories  > connect repo using HTTPS > connect (public no need to add username & Token)
+
+Create an Application > Application Name: MERN STACK DB,selfheal:yes,repo:github-repo,path:manifestfilepathofdatabase,clusterurl: default,namespace:MERN > Create
+
+Create an Application > Application Name: MERN STACK Backend,selfheal:yes,repo:github-repo,path:manifestfilepathofbackend,clusterurl: default,namespace:MERN > Create
+
+Create an Application > Application Name: MERN STACK frontend,selfheal:yes,repo:github-repo,path:manifestfilepathoffrontend,clusterurl: default,namespace:MERN > Create
+
+Create an Application > Application Name: MERN STACK ingress,selfheal:yes,repo:github-repo,path:manifestfileof ingress.yaml,clusterurl: default,namespace:MERN > Create
+
+change the dns name in ingress.yaml with probes  
+startup-probes: To check the Application
+livenss-probes: To restart the Application
+readiness-probes: to check app alow traffic
+##----Jumpserver--------##
+
+ebs created csi driver is important to create ebs driver
+
+kubectl create ns MERN
+
+kubectl get all -n MERN
+
+ADD dns > create a record > endpoint is k8s loadbalancer

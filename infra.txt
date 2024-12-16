@@ -1,0 +1,116 @@
+Create a IAM role of ec2 with administrator access attach to EC2
+Create a EC2 Instance with t2.xlarge
+w/o key pair
+Default VPC
+Security Group allow necessary ports
+Storage with 30 GB
+User data:
+- install openjdk
+- install Jenkins
+- Terraform
+- Trivy
+- SonarQube
+- AWS CLI
+- Docker
+
+sudo su ubuntu
+sudo h top
+systemctl status.jenkins --> password for jenkins
+
+----------------Jenkins---------------------------
+Plugins:
+install These Plugins
+- aws-credentials
+- pipeline:AWS steps
+- Terraform
+- pipeline:satgeview
+
+Credentials:
+Aws-credentials:
+Global > Add credentials
+kind - aws-credentials
+scope - Global
+id-aws-creds 
+acceskeyid - iam acceskeyid
+seccretaccesskey- iam seccretaccesskey
+
+Tools:
+
+Install Terraform
+run whereis terraform (in Jenkins-server)
+copy the path
+paste that path in install directory
+
+pipelinename: infrastruture
+write Terraform Module file Create infrastruture (EKS-Cluster)
+With Jenkins Pipeline we create the ekscluster
+Create a Jump Server in the eks-cluster VPC to connect with workernodes to do any changes in the workernodes(no public acces)
+- Create a Ec2 instance with t2.medium
+- publicsubnet
+- enable public ip
+-  Iam administrator acces
+- Install
+    - AWS CLI
+    - kubectl
+    - eksctl 
+    - Helm
+## Jump server conect through seesion manager##
+sudo su ubuntu
+check the packages installed or not
+
+##-----jenkins sever-----------------##
+(Acces the eks cluster)
+aws configure
+aws s3 ls
+
+aws eks update-kubeconfig --name dev-medium-eks-cluster --region us-east-1
+install kubectl
+kubectl get nodes -o wide 
+(time out error we got)(eks vpc jenkins-server Vpc different)
+
+##---Jump server----##
+aws configure
+aws eks update-kubeconfig --name dev-medium-eks-cluster --region us-east-1
+kubectl get nodes -o wide
+(we get the nodes because jumpserver and ekscluster in same vpc)
+
+To create a Loadbalancer on the ekscluster we create a service account:
+
+Tieing K8s with IAM
+Download the policy for the LoadBalancer prerequisite:
+curl -O https://raw.githubusercontent.com/kubernetes-sigs/aws-load-balancer-controller/v2.5.4/docs/install/iam_policy.json
+cat iam_policy.json
+
+create a service account:(it is cloudformation)
+eksctl create iamserviceaccount --cluster=dev-medium-eks-cluster --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::<your_account_id>:policy/AWSLoadBalancerControllerIAMPolicy --approve --region=us-east-1
+
+to get the service account
+kubectl ge sa -n kube-system
+
+# repository
+helm repo add eks https://aws.github.io/eks-charts
+helm repo update eks
+
+helm repo list
+helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n kube-system --set clusterName=dev-medium-eks-cluster --set serviceAccount.create=false --set serviceAccount.name=aws-load-balancer-controller
+
+kubectl get deployments -n kubesystem aws-load-balancer-controller
+
+##ArgoCD
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.4.7/manifests/install.yaml
+kubectl get all -n argocd
+
+kubectl get svc -n argocd
+kubectl edit svc argocd-server -n argocd
+        change the 
+            type:LoadBalancer
+Loadbalancer will be created by cloudcontrolmanager of ekscluster not by aws-load-balancer-controll
+copy the DNS ArgoCd UI
+Username:admin
+Password: paste the real password
+kubectl get secrets -n argocd
+kubectl edit secret argocd-intial-admin-secret -n argocd
+copy the password
+echo password | base64 --decode
+we got real password
