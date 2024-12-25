@@ -1,0 +1,35 @@
+## TO Create Deployment file
+kubectl create deployment <name> --image=<imagename> --port=<portno> --replicas=2 --dry-run=client -o yaml
+
+## To expose service
+kubectl expose deployment democicd --port=8080 --target-port=8080 --type=NodePort --dry-run=client -o yaml
+
+## For Pv
+kubectl create pv mongo-pv --namespace=three-tier --capacity=1Gi --access-modes=ReadWriteOnce --volume-mode=Filesystem --dry-run=client -o yaml | sed '/^  /a \  hostPath:\n    path: /data/db' > mongo-pv.yaml
+
+## for pvc
+kubectl create pvc mongo-volume-claim --namespace=three-tier --storage=1Gi --access-modes=ReadWriteOnce --storage-class="" --dry-run=client -o yaml > mongo-volume-claim.yaml
+
+
+## To create Service
+kubectl create service clusterip mongodb-svc \
+  --namespace=three-tier \
+  --tcp=27017:27017 \
+  --dry-run=client -o yaml > mongodb-svc.yaml
+
+## for Secrets
+kubectl create secret generic mongo-sec \
+  --namespace=three-tier \
+  --from-literal=username=admin \
+  --from-literal=password=password123 \
+  --dry-run=client -o yaml > mongo-sec.yaml
+
+## for configmaps
+kubectl create configmap my-configmap --from-literal=key1=value1 --from-literal=key2=value2 --dry-run=client -o yaml
+
+## For Ingress
+kubectl create ingress mainlb \
+  --namespace=three-tier \
+  --class=alb \
+  --rule="amanpathakdevops.study/api=api:3500" \
+  --dry-run=client -o yaml | tee mainlb.yaml
